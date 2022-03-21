@@ -29,32 +29,51 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
 class UserUploadCommand extends Command
 {
-    protected static $defaultName = 'demo:args';
+    protected static $defaultName = 'catalyst:user_upload';
+    protected static $defaultDescription = 'Import CSV file into database';
 
     protected function configure()
     {
         $this
-            ->setDescription('Describe args behaviors')
+            ->setDescription('Possible options')
             ->setDefinition(
                 new InputDefinition([
-                    new InputOption('foo', 'f'),
-                    new InputOption('bar', 'b', InputOption::VALUE_REQUIRED),
-                    new InputOption('cat', 'c', InputOption::VALUE_OPTIONAL),
+                    new InputOption('file', 'f', InputOption::VALUE_OPTIONAL, 'The name of the CSV to be parsed'),
+                    new InputOption('create_table', null, InputOption::VALUE_OPTIONAL, 'This will cause the MySQL users table to be built'),
+                    new InputOption('dry_run', null, InputOption::VALUE_OPTIONAL,'Do not alter database, just run the script'),
+
+                    // Common service shortcuts will be capitalized because of conflict with 'h' for help
+                    new InputOption('db_user', 'U', InputOption::VALUE_OPTIONAL,'Mysql username'),
+                    new InputOption('db_password', 'P', InputOption::VALUE_OPTIONAL,'Mysql password'),
+                    new InputOption('db_host', 'H', InputOption::VALUE_OPTIONAL,'Mysql database'),
                 ])
             );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        // ...
+        $io = new SymfonyStyle($input,$output);
+        if (count($input->getArguments()) === 1) {
+            $io->title('Catalyst code competition');
+            $io->text('Use -h or --help to display all possible options');
+        }
+
+
+        // for more comfortable reading
+        $output->writeln('');
+        $output->writeln('');
+        return Command::SUCCESS;
     }
 }
 
 $application = new Application();
-$application->add(new UserUploadCommand());
+$userUploadCommand = new UserUploadCommand();
+$application->add($userUploadCommand);
+$application->setDefaultCommand($userUploadCommand->getName());
 
 try {
     $application->run();
