@@ -1,30 +1,46 @@
 <?php
 namespace Catalyst\Service;
 
-use Catalyst\Exception\CSVStructureException;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class CsvService {
+    /** @var OutputInterface */
+    private $output = null;
+    /** @var int Total rows in CSV file */
+    public int $fileRowsTotal = 0;
+    /** @var int Valid rows in CSV file */
+    public int $fileRowsValid = 0;
 
-    private $errors = [];
+    public function setOutputInterface(OutputInterface $output)
+    {
+        $this->output = $output;
+    }
 
     /**
+     * Retrieve valid rows as array from given file
      * @param $pathCsv string Path to CSV file
      * @return array Array ready for insert
      */
-    public function processFile($pathCsv) {
+    public function processFile(string $pathCsv): array
+    {
+        // reset counters in case of several files
+        $this->fileRowsTotal = 0;
+        $this->fileRowsValid = 0;
+
         $f = fopen($pathCsv,'r');
         $readyArray = [];
-        $rowNum = 0;
         while ($row = fgetcsv($f)) {
+            $this->fileRowsTotal++;
             if (count($row) != 3) {
-                $this->addError('Row #'.$rowNum.' does not match required structure'."\n".implode(',',$row));
-                $rowNum++;
+                $this->log('Row #'.($this->fileRowsTotal-1).' does not match required structure'."\n".implode(',',$row));
                 continue;
             }
             array_walk($row,function($txt){
                 return trim($txt);
             });
             list($tName, $tSurname, $tEmail) = $row;
+
+            // may be it is useful to lowercase before capitalize
             $tName = ucfirst($tName);
             $tSurname = ucfirst($tSurname);
             $tEmail = mb_strtolower($tEmail);
@@ -33,12 +49,25 @@ class CsvService {
             if ($tName && $tSurname && $this->validateEmail($tEmail)) {
                 // this structure is more cheap for store in case of large file
                 $readyArray[] = [$tName,$tSurname,$tEmail];
+                $this->fileRowsValid++;
             } else {
-                $this->addError('Row #'.$rowNum.' have invalid data'."\n".implode(',',$row));
+                $this->log('Row #'.($this->fileRowsTotal-1).' have an invalid data'."\n".implode(',',$row));
             }
-            $rowNum++;
         }
         return $readyArray;
+    }
+
+    /**
+     * Output log
+     * @param $txt
+     * @return void
+     */
+    private function log($txt) {
+        if ($this->output instanceof OutputInterface) {
+            if ($this->output->isVerbose()) {
+                $this->output->writeln($txt);
+            }
+        }
     }
 
     /**
@@ -46,26 +75,12 @@ class CsvService {
      * @param $email string Email
      * @return bool
      */
-    private function validateEmail($email) {
+    private function validateEmail(string $email): bool
+    {
         if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return true;
         } else {
             return false;
         }
-    }
-
-    /**
-     * @param $txt string error text
-     * @return void
-     */
-    private function addError($txt) {
-        $this->errors[] = $txt;
-    }
-
-    /**
-     * @return array array of errors
-     */
-    public function getErrors() {
-        return $this->errors;
     }
 }

@@ -34,9 +34,38 @@ class DbService {
      */
     public function insert(string $tName, string $tSurname, string $tEmail): bool
     {
-        // it is "cheaper" to replace data by unique key rather than check if exist every time
+        // it is "cheaper" to replace data by unique key rather than check if exist every time. At least for current task
         $stmt = $this->mysqli->prepare('REPLACE INTO users (`name`, surname, email) values (?,?,?)');
         $stmt->bind_param("sss", $tName,$tSurname,$tEmail);
         return $stmt->execute();
+    }
+
+    public function createTableUsers($reCreate = false): bool
+    {
+        // name and surname are varchar not char because of possible dashes (in case if Elon Musk's son in CSV (his name is "X AE A-XII"))
+        $sql = '
+            CREATE TABLE `users` (
+                `id` int(11) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                `name` varchar(32) NOT NULL,
+                `surname` varchar(32) NOT NULL,
+                `email` varchar(64) NOT NULL
+            ) COMMENT=\'Users inserted from CSV\' ENGINE=\'InnoDB\' COLLATE \'utf8_general_ci\'';
+        $isCreated = $this->mysqli->query($sql);
+        // error means table already exists
+        if (!$isCreated && $reCreate) {
+            $this->deleteTableUsers();
+            $this->mysqli->query($sql);
+        }
+        if ($isCreated) {
+            $sql = 'ALTER TABLE `users` ADD UNIQUE `email` (`email`)';
+            $this->mysqli->query($sql);
+        }
+        return $isCreated;
+    }
+
+    public function deleteTableUsers()
+    {
+        $sql = 'DROP TABLE users';
+        $this->mysqli->query($sql);
     }
 }

@@ -73,30 +73,48 @@ class UserUploadCommand extends Command
             $this->io->text('Use -h or --help to display all possible options');
         }
 
-        $readOnly = true;
+        $isReadOnly = true;
         if (!$input->getOption('dry_run')) {
-            $readOnly = false;
+            $isReadOnly = false;
+            // database connection is not required in other cases
             $this->sDb = new DbService($input->getOption('db_user'),$input->getOption('db_password'),$input->getOption('db_host'),$input->getOption('db_name'));
-        }
 
-        if ($input->getOption('file')) {
-            $pathCSV = $input->getOption('file');
-            if (!file_exists($pathCSV)) {
-                throw new CSVFileNotFoundException('Csv file ('.$pathCSV.') not found');
-            }
-            $this->sCsv = new CsvService();
-            $readyForInsert = $this->sCsv->processFile($pathCSV);
-            if (!$readOnly && count($readyForInsert)) {
-                foreach ($readyForInsert as $row) {
-                    $success = $this->sDb->insert($row[0],$row[1],$row[2]); // looks not pretty but uses less memory in case of large files to import
-                    if (!$success) {
-                        $this->io->error('Mysql error during insert');
+            if ($input->getOption('create_table')) {
+                $isCreated = $this->sDb->createTableUsers();
+                if (!$isCreated) {
+                    $answer = $this->io->ask('Table already exits. Recreate it?','no');
+                    if ($answer == 'yes') {
+                        $this->sDb->createTableUsers(true);
                     }
                 }
             }
         }
 
-
+        $rowsInserted = 0;
+        if ($input->getOption('file')) {
+            $pathCSV = $input->getOption('file');
+            // my first thought was a security check for file location (for example /etc/passwd) but in case of console
+            // script this check is not required because of permissions inherited from the system user.
+            if (!file_exists($pathCSV)) {
+                throw new CSVFileNotFoundException('Csv file ('.$pathCSV.') not found');
+            }
+            $this->sCsv = new CsvService();
+            $this->sCsv->setOutputInterface($output);
+            $readyForInsert = $this->sCsv->processFile($pathCSV);
+            if (!$isReadOnly && count($readyForInsert)) {
+                foreach ($readyForInsert as $row) {
+                    $success = $this->sDb->insert($row[0],$row[1],$row[2]); // looks not pretty but uses less memory in case of large files to import
+                    if ($output->isVerbose() && !$success) {
+                        $this->io->error('Mysql error during insert');
+                    }
+                    if ($success) {
+                        $rowsInserted++;
+                    }
+                }
+            }
+            $this->io->title($pathCSV);
+            $this->io->table(['Total rows','Valid rows','Inserted rows'],[$this->sCsv->fileRowsTotal,$this->sCsv->fileRowsValid,$rowsInserted]);
+        }
         // for more comfortable reading
         $output->writeln('');
         $output->writeln('');

@@ -1,6 +1,7 @@
 {
     "require": {
-        "symfony/console": "^5.4"
+        "symfony/console": "^5.4",
+        "ext-mysqli": "*"
     },
     "autoload": {
         "psr-4": {
