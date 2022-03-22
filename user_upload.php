@@ -57,10 +57,10 @@ class UserUploadCommand extends Command
                     new InputOption('dry_run', null, null,'Do not alter database, just run the script'),
 
                     // Common mysql service shortcuts will be capitalized because of conflict with 'h' for help
-                    new InputOption('db_user', 'U', InputOption::VALUE_REQUIRED,'Mysql username'),
-                    new InputOption('db_password', 'P', InputOption::VALUE_REQUIRED,'Mysql password'),
-                    new InputOption('db_host', 'H', InputOption::VALUE_REQUIRED,'Mysql database host'),
-                    new InputOption('db_name', 'N', InputOption::VALUE_REQUIRED,'Mysql database name'),
+                    new InputOption('db_user', 'U', InputOption::VALUE_REQUIRED,'Mysql username','root'),
+                    new InputOption('db_password', 'P', InputOption::VALUE_REQUIRED,'Mysql password',''),
+                    new InputOption('db_host', 'H', InputOption::VALUE_REQUIRED,'Mysql database host','localhost'),
+                    new InputOption('db_name', 'N', InputOption::VALUE_REQUIRED,'Mysql database name','test'),
                 ])
             );
     }
@@ -71,6 +71,8 @@ class UserUploadCommand extends Command
         if (count($input->getArguments()) === 1) {
             $this->io->title('Catalyst code competition');
             $this->io->text('Use -h or --help to display all possible options');
+            $output->writeln('');
+            $output->writeln('');
         }
 
         $isReadOnly = true;
@@ -113,7 +115,7 @@ class UserUploadCommand extends Command
                 }
             }
             $this->io->title($pathCSV);
-            $this->io->table(['Total rows','Valid rows','Inserted rows'],[$this->sCsv->fileRowsTotal,$this->sCsv->fileRowsValid,$rowsInserted]);
+            $this->io->table(['Total rows','Valid rows','Inserted rows'],[[$this->sCsv->fileRowsTotal,$this->sCsv->fileRowsValid,$rowsInserted]]);
         }
         // for more comfortable reading
         $output->writeln('');
@@ -139,5 +141,5 @@ try {
     // it is possible to send this error automatically on my email or in Telegram messenger, but in this case i think it is too much
 
     exit;
-    // no need to exit here, but in future there is a chance to extend functionality of this script and without this "exit" script will continue to run and it is possible to get unexpected behavior
+    // no need to exit here, but in future there is a chance to extend functionality of this script and without this "exit" script will continue to run, and it is possible to get unexpected behavior
 }

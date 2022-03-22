@@ -7,9 +7,9 @@ class CsvService {
     /** @var OutputInterface */
     private $output = null;
     /** @var int Total rows in CSV file */
-    public int $fileRowsTotal = 0;
+    public $fileRowsTotal = 0;
     /** @var int Valid rows in CSV file */
-    public int $fileRowsValid = 0;
+    public $fileRowsValid = 0;
 
     public function setOutputInterface(OutputInterface $output)
     {
@@ -35,15 +35,15 @@ class CsvService {
                 $this->log('Row #'.($this->fileRowsTotal-1).' does not match required structure'."\n".implode(',',$row));
                 continue;
             }
-            array_walk($row,function($txt){
-                return trim($txt);
-            });
+            $this->log('Raw data:'."\n".var_export($row,true),true);
+            $row = array_map(function($txt){
+                return mb_strtolower(trim($txt));
+            },$row);
             list($tName, $tSurname, $tEmail) = $row;
 
-            // may be it is useful to lowercase before capitalize
-            $tName = ucfirst($tName);
-            $tSurname = ucfirst($tSurname);
-            $tEmail = mb_strtolower($tEmail);
+            $tName = $this->prepareName($tName);
+            $tSurname = $this->prepareName($tSurname);
+            $this->log('Prepared data:'."\n".var_export([$tName,$tSurname,$tEmail],true)."\n---------",true);
 
             // This part checking head of CSV and validate email
             if ($tName && $tSurname && $this->validateEmail($tEmail)) {
@@ -51,33 +51,51 @@ class CsvService {
                 $readyArray[] = [$tName,$tSurname,$tEmail];
                 $this->fileRowsValid++;
             } else {
-                $this->log('Row #'.($this->fileRowsTotal-1).' have an invalid data'."\n".implode(',',$row));
+                $this->log('Row #'.($this->fileRowsTotal-1).' have an invalid data: '.implode(',',$row));
             }
         }
         return $readyArray;
     }
 
+
     /**
-     * Output log
-     * @param $txt
+     * Name preparation
+     * @param string $txt
+     * @return string
+     */
+    private function prepareName(string $txt) {
+        return ucfirst(preg_replace('~[^\w\'\-]~sui','',$txt));
+    }
+
+    /**
+     * Log output
+     * @param string $txt
+     * @param $isDebug
      * @return void
      */
-    private function log($txt) {
+    private function log(string $txt, $isDebug = false) {
         if ($this->output instanceof OutputInterface) {
-            if ($this->output->isVerbose()) {
-                $this->output->writeln($txt);
+            if ($isDebug) {
+                if ($this->output->isDebug()) {
+                    $this->output->writeln($txt);
+                }
+            } else {
+                if ($this->output->isVerbose()) {
+                    $this->output->writeln($txt);
+                }
             }
+
         }
     }
 
     /**
-     * Regexp is more flexible, but filter_var is OK too
+     * Email check, filter_var function is passing email "mo'connor@cat.net.nz"
      * @param $email string Email
      * @return bool
      */
     private function validateEmail(string $email): bool
     {
-        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (preg_match('~^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$~',$email)) {
             return true;
         } else {
             return false;
