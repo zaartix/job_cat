@@ -1,4 +1,4 @@
-# Test tasks
+# Test task 1
 ## Script Task
 Create a PHP script, that is executed from the command line, which accepts a CSV file as input (see command
 line directives below) and processes the CSV file. The parsed file data is to be inserted into a MySQL database.
@@ -60,6 +60,20 @@ The PHP script should include these command line options (directives):
 - -p – MySQL password
 - -h – MySQL host
 - --help – which will output the above list of directives with details.
+# Test task 2
+## Logic Test
+Create a PHP script that is executed form the command line. The script should:
+- Output the numbers from 1 to 100
+- Where the number is divisible by three (3) output the word “foo”
+- Where the number is divisible by five (5) output the word “bar”
+- Where the number is divisible by three (3) and (5) output the word “foobar”
+- Only be a single PHP file
+## Example
+An example output of the script would look like:
+1, 2, foo, 4, bar, foo, 7, 8, foo, bar, 11, foo, 13, 14, foobar ...
+## Deliverable
+The deliverable for this task is a PHP script called foobar.php. Please include this script in the same source
+control as the script test.
 
 # Result
 This is the result of a test task for one of the employers. The name of the employer is hidden for privacy reasons of their test tasks.
