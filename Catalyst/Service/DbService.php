@@ -66,16 +66,13 @@ class DbService extends ConsoleService {
                 `email` varchar(64) NOT NULL
             ) COMMENT=\'Users inserted from CSV\' ENGINE=\'InnoDB\' COLLATE \'utf8_general_ci\'';
         $this->log('SQL: '.$sql,true);
-        $isCreated = false;
-        try {
-            $isCreated = $this->mysqli->query($sql);
-        } catch (\mysqli_sql_exception $e) {
-            // error means table already exists or some kind of low level error (no space left on HDD)
-            if ($reCreate) {
-                $this->deleteTableUsers();
-                $isCreated = $this->mysqli->query($sql); // if exception will be here it is some unexpected
-            }
+        $isCreated = $this->mysqli->query($sql);
+        // error means table already exists or some kind of low level error (no space left on HDD)
+        if (!$isCreated && $reCreate) {
+            $this->deleteTableUsers();
+            $isCreated = $this->mysqli->query($sql); // if exception will be here it is some unexpected
         }
+
         if ($isCreated) {
             $sql = 'ALTER TABLE `users` ADD UNIQUE `email` (`email`)';
             $this->mysqli->query($sql);

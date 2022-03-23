@@ -51,7 +51,7 @@ class UserUploadCommand extends Command
             ->setDescription('Possible options')
             ->setDefinition(
                 new InputDefinition([
-                    new InputOption('file', 'f', InputOption::VALUE_REQUIRED, 'The name of the CSV to be parsed'),
+                    new InputOption('file', null, InputOption::VALUE_REQUIRED, 'The name of the CSV to be parsed'),
                     new InputOption('create_table', null, null, 'This will cause the MySQL users table to be built'),
                     new InputOption('dry_run', null, null,'Do not alter database, just run the script'),
 
@@ -91,9 +91,13 @@ class UserUploadCommand extends Command
                 if (!$isCreated) {
                     $answer = $this->io->ask('Table already exits. Recreate it?','no');
                     if ($answer == 'yes') {
-                        $this->sDb->createTableUsers(true);
+                        $isCreated = $this->sDb->createTableUsers(true);
                     }
                 }
+                if ($isCreated) {
+                    $this->io->success('Table created successfully');
+                }
+                exit;
             }
         }
 
@@ -117,6 +121,7 @@ class UserUploadCommand extends Command
             $this->io->title($pathCSV);
             $this->io->table(['Total rows','Valid rows','Inserted rows'],[[$this->sCsv->fileRowsTotal,$this->sCsv->fileRowsValid,$rowsInserted]]);
         }
+        $this->io->text('Finished at: '.date('Y-m-d H:i:s'));
         // for more comfortable reading
         $output->writeln('');
         $output->writeln('');
@@ -127,7 +132,7 @@ class UserUploadCommand extends Command
 $application = new Application();
 $userUploadCommand = new UserUploadCommand();
 $application->add($userUploadCommand);
-$application->setDefaultCommand($userUploadCommand->getName());
+$application->setDefaultCommand($userUploadCommand->getName(),true);
 
 try {
     $application->run();
