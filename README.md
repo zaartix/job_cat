@@ -7,7 +7,11 @@ This is the result of a test task for one of the employers. The name of the empl
 
 To install you will need to clone this repository
 ```bash
-git clone git@github.com:zaartix/job_cat.git
+git clone https://github.com/zaartix/job_cat.git
+```
+Go to `job_cat` directory
+```bash
+cd ./job_cat
 ```
 After that you need to install composer
 ```bash
