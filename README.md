@@ -1,4 +1,4 @@
-# Test tasks for some nice employer
+# Test tasks for employer
 
 ## Overview
 This is the result of a test task for one of the employers. The name of the employer is hidden for privacy reasons of their test tasks.
