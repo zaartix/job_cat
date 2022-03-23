@@ -43,7 +43,6 @@ Available command line options (directives):
 - `-P` – MySQL password
 - `-H` – MySQL host
 - `-N` – MySQL database name
-- `--help` – which will output the above list of directives with details.
 - `-v` - verbode output mode
 - `-vvv` - debug output mode
 - `-h` or `--help` - display help
