@@ -22,11 +22,9 @@ if (file_exists(PATH_AUTOLOADER) && filesize(PATH_AUTOLOADER)) { //
 }
 
 // now we can use required components
-use Catalyst\Exception\CSVFileNotFoundException;
 use Catalyst\Service\DbService;
 use Catalyst\Service\CsvService;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -95,11 +93,6 @@ class UserUploadCommand extends Command
         $rowsInserted = 0;
         if ($input->getOption('file')) {
             $pathCSV = $input->getOption('file');
-            // my first thought was a security check for file location (for example /etc/passwd) but in case of console
-            // script this check is not required because of permissions inherited from the system user.
-            if (!file_exists($pathCSV)) {
-                throw new CSVFileNotFoundException('Csv file ('.$pathCSV.') not found');
-            }
             $this->sCsv = new CsvService();
             $this->sCsv->setOutputInterface($output);
             $readyForInsert = $this->sCsv->processFile($pathCSV);
@@ -131,15 +124,16 @@ $application->setDefaultCommand($userUploadCommand->getName());
 
 try {
     $application->run();
-
-} catch (CSVFileNotFoundException $e) {
-
-} catch (\Exception $e) { // there is no way to get this error "legally", only if i've pushed broken code into git. Can't imagine how to push untested code (at least "by hands") on production server
+} catch (\Exception | \ErrorException $e) {
+    // there is no way to get this error "legally", only if i've pushed broken code
+    // into git. Can't imagine how to push untested code (at least "by hands") on production server
     echo $e->getMessage()."\n\n";
     echo 'There is critical error in this tool, please contact Alexey Derenchenko ( zaartix@gmail.com ) and provide this code:'."\n\n";
     echo base64_encode($e->getMessage()."\n".$e->getFile().':'.$e->getLine()."\n\n".$e->getTraceAsString()); // simple obfuscation
-    // it is possible to send this error automatically on my email or in Telegram messenger, but in this case i think it is too much
+
+    // it is possible to send this error automatically on my email or via Telegram messenger, but in this case i think it is too much
 
     exit;
-    // no need to exit here, but in future there is a chance to extend functionality of this script and without this "exit" script will continue to run, and it is possible to get unexpected behavior
+    // no need to exit here, but in future there is a chance to extend functionality of this script and without this "exit"
+    // script will continue to run, and it is possible to get unexpected behavior
 }

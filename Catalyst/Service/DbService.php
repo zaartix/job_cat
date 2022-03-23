@@ -52,7 +52,7 @@ class DbService {
      * @param $reCreate boolean Flag to drop table if already exists
      * @return bool
      */
-    public function createTableUsers($reCreate = false): bool
+    public function createTableUsers(bool $reCreate = false): bool
     {
         // name and surname are varchar not char because of possible dashes (in case if Elon Musk's son in CSV (his name is "X AE A-XII"))
         $sql = '

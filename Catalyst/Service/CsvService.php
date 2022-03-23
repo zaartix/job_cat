@@ -1,6 +1,7 @@
 <?php
 namespace Catalyst\Service;
 
+use Catalyst\Exception\CSVFileNotFoundException;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class CsvService {
@@ -23,6 +24,11 @@ class CsvService {
      */
     public function processFile(string $pathCsv): array
     {
+        // my first thought was a security check for file location (for example /etc/passwd) but in case of console
+        // script this check is not required because of permissions inherited from the system user.
+        if (!file_exists($pathCsv)) {
+            throw new CSVFileNotFoundException('Csv file ('.$pathCsv.') not found');
+        }
         // reset counters in case of several files
         $this->fileRowsTotal = 0;
         $this->fileRowsValid = 0;
@@ -63,17 +69,18 @@ class CsvService {
      * @param string $txt
      * @return string
      */
-    private function prepareName(string $txt) {
+    private function prepareName(string $txt): string
+    {
         return ucfirst(preg_replace('~[^\w\'\-]~sui','',$txt));
     }
 
     /**
      * Log output
      * @param string $txt
-     * @param $isDebug
+     * @param bool $isDebug
      * @return void
      */
-    private function log(string $txt, $isDebug = false) {
+    private function log(string $txt, bool $isDebug = false) {
         if ($this->output instanceof OutputInterface) {
             if ($isDebug) {
                 if ($this->output->isDebug()) {
