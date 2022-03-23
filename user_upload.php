@@ -6,18 +6,19 @@ namespace Command;
 // This script using Symfony component called "Console"
 // https://symfony.com/doc/current/components/console.html
 
+error_reporting(E_PARSE);
 const PATH_AUTOLOADER = __DIR__.'/vendor/autoload.php';
 // simple check
 if (file_exists(PATH_AUTOLOADER) && filesize(PATH_AUTOLOADER)) { //
     try {
         require PATH_AUTOLOADER;
-    } catch (\Exception | \ErrorException $e) { // may be some network issue during composer install or HDD drive issue
+    } catch (\Exception $e) { // may be some network issue during composer install or HDD drive issue
         echo $e->getMessage()."\n";
         echo 'Error loading composer autoloader ('.PATH_AUTOLOADER.'), please try to reinstall it';
         exit;
     }
 } else {
-    echo 'Composer is required to run this script';
+    echo 'Composer is required to run this script. Details: https://github.com/zaartix/job_cat';
     exit;
 }
 
@@ -66,6 +67,11 @@ class UserUploadCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->io = new SymfonyStyle($input,$output);
+        if ($output->isDebug()) {
+            error_reporting(E_ALL);
+        } elseif ($output->isVerbose()) {
+            error_reporting(E_PARSE|E_ERROR|E_WARNING);
+        }
         if (count($input->getArguments()) === 1) {
             $this->io->title('Catalyst code competition');
             $this->io->text('Use -h or --help to display all possible options');
@@ -78,6 +84,7 @@ class UserUploadCommand extends Command
             $isReadOnly = false;
             // database connection is not required in other cases
             $this->sDb = new DbService($input->getOption('db_user'),$input->getOption('db_password'),$input->getOption('db_host'),$input->getOption('db_name'));
+            $this->sDb->setOutputInterface($output);
 
             if ($input->getOption('create_table')) {
                 $isCreated = $this->sDb->createTableUsers();
@@ -124,7 +131,7 @@ $application->setDefaultCommand($userUploadCommand->getName());
 
 try {
     $application->run();
-} catch (\Exception | \ErrorException $e) {
+} catch (\Exception $e) {
     // there is no way to get this error "legally", only if i've pushed broken code
     // into git. Can't imagine how to push untested code (at least "by hands") on production server
     echo $e->getMessage()."\n\n";

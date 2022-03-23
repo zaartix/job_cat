@@ -5,7 +5,7 @@ use Catalyst\Exception\DbConnectException;
 
 /* I'm prefers to use Doctrine ORM, but in this case it is too "heavy" and Doctrine not good for import a lot of data because of memory leaks */
 
-class DbService {
+class DbService extends ConsoleService {
     /**
      * @var false|\mysqli
      */
@@ -22,7 +22,6 @@ class DbService {
         if (!class_exists('mysqli')) {
             throw new DbConnectException('MySQLi component is not installed');
         }
-        mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
         $this->mysqli = new \mysqli($host, $user, $pass, $db);
         if ($this->mysqli->connect_errno) {
             throw new DbConnectException('Can\'t connect to database. Error: '.$this->mysqli->connect_error);
@@ -39,11 +38,15 @@ class DbService {
     public function insert(string $tName, string $tSurname, string $tEmail): bool
     {
         // it is "cheaper" to replace data by unique key rather than check if exist every time. At least for current task
-        $stmt = $this->mysqli->prepare('REPLACE INTO users (name, surname, email) values (?,?,?)');
+        $sql = 'REPLACE INTO users (name, surname, email) values (?,?,?)';
+        $stmt = $this->mysqli->prepare($sql);
+        $this->log('SQL: '.$sql,true);
         if ($stmt === false) {
+            $this->log($this->mysqli->error);
             throw new DbConnectException('Table users possibly not created. Use key --create_table');
         }
         $stmt->bind_param("sss", $tName,$tSurname,$tEmail);
+        $this->log('SQL params: '.print_r([$tName,$tSurname,$tEmail],true),true);
         return $stmt->execute();
     }
 
@@ -62,15 +65,21 @@ class DbService {
                 `surname` varchar(32) NOT NULL,
                 `email` varchar(64) NOT NULL
             ) COMMENT=\'Users inserted from CSV\' ENGINE=\'InnoDB\' COLLATE \'utf8_general_ci\'';
-        $isCreated = $this->mysqli->query($sql);
-        // error means table already exists or some kind of low level error (no space left on HDD)
-        if (!$isCreated && $reCreate) {
-            $this->deleteTableUsers();
+        $this->log('SQL: '.$sql,true);
+        $isCreated = false;
+        try {
             $isCreated = $this->mysqli->query($sql);
+        } catch (\mysqli_sql_exception $e) {
+            // error means table already exists or some kind of low level error (no space left on HDD)
+            if ($reCreate) {
+                $this->deleteTableUsers();
+                $isCreated = $this->mysqli->query($sql); // if exception will be here it is some unexpected
+            }
         }
         if ($isCreated) {
             $sql = 'ALTER TABLE `users` ADD UNIQUE `email` (`email`)';
             $this->mysqli->query($sql);
+            $this->log('SQL: '.$sql,true);
         }
         return $isCreated;
     }
@@ -83,5 +92,6 @@ class DbService {
     {
         $sql = 'DROP TABLE users';
         $this->mysqli->query($sql);
+        $this->log('SQL: '.$sql,true);
     }
 }

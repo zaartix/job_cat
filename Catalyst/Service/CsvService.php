@@ -2,20 +2,12 @@
 namespace Catalyst\Service;
 
 use Catalyst\Exception\CSVFileNotFoundException;
-use Symfony\Component\Console\Output\OutputInterface;
 
-class CsvService {
-    /** @var OutputInterface */
-    private $output = null;
+class CsvService extends ConsoleService {
     /** @var int Total rows in CSV file */
     public $fileRowsTotal = 0;
     /** @var int Valid rows in CSV file */
     public $fileRowsValid = 0;
-
-    public function setOutputInterface(OutputInterface $output)
-    {
-        $this->output = $output;
-    }
 
     /**
      * Retrieve valid rows as array from given file
@@ -72,27 +64,6 @@ class CsvService {
     private function prepareName(string $txt): string
     {
         return ucfirst(preg_replace('~[^\w\'\-]~sui','',$txt));
-    }
-
-    /**
-     * Log output
-     * @param string $txt
-     * @param bool $isDebug
-     * @return void
-     */
-    private function log(string $txt, bool $isDebug = false) {
-        if ($this->output instanceof OutputInterface) {
-            if ($isDebug) {
-                if ($this->output->isDebug()) {
-                    $this->output->writeln($txt);
-                }
-            } else {
-                if ($this->output->isVerbose()) {
-                    $this->output->writeln($txt);
-                }
-            }
-
-        }
     }
 
     /**
