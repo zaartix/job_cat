@@ -104,7 +104,7 @@ php ./composer.phar install
 
 ### user_upload.php
 There is three different output modes. 
-- Default mode is output only results of processing CSV data. 
+- Default mode is output only results of processed CSV data. 
 - Verbose mode is output invalid rows. 
 - Debug mode is output sql queries, pre and post processed rows, etec.
 
